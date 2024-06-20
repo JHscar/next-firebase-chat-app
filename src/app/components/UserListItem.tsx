@@ -1,3 +1,4 @@
+// /components/UserListItem.tsx
 "use client";
 import { useRouter } from "next/navigation";
 import { User } from "firebase/auth";
@@ -6,28 +7,26 @@ import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db } from "@/firebase";
 import Image from "next/image";
 
-interface IUserListItemProps {
+interface UserListItemProps {
   sender: User;
   receiver: User;
   selectedChatId?: string;
   chats: IChat[];
 }
 
-export default function UserListItem({
+const UserListItem = ({
   sender,
   receiver,
   selectedChatId,
   chats,
-}: IUserListItemProps) {
+}: UserListItemProps) => {
   const router = useRouter();
 
-  console.log("receiver", receiver);
-
-  const chatExists = (receiverEmail: string) => {
+  const chatExists = (receiverEmail: string): IChat | undefined => {
     const senderEmail = sender.email!;
-    return chats?.find(
+    return chats.find(
       (chat: IChat) =>
-        chat?.users?.includes(senderEmail) && chat.users.includes(receiverEmail)
+        chat.users.includes(senderEmail) && chat.users.includes(receiverEmail)
     );
   };
 
@@ -50,41 +49,43 @@ export default function UserListItem({
       email: receiver.email,
     };
 
-    if (!chat) {
-      const { id } = await addDoc(collection(db, "chats"), {
-        usersData: [senderData, receiverData],
-        users: [sender.email, receiver.email],
-        timestamp: serverTimestamp(),
-      });
-      redirect(id);
-    } else {
-      redirect(chat.id);
+    try {
+      if (!chat) {
+        const { id } = await addDoc(collection(db, "chats"), {
+          usersData: [senderData, receiverData],
+          users: [sender.email, receiver.email],
+          timestamp: serverTimestamp(),
+        });
+        redirect(id);
+      } else {
+        redirect(chat.id);
+      }
+    } catch (error) {
+      console.error("Error creating or redirecting to chat: ", error);
     }
   };
 
   return (
     <div className="w-full p-4">
       <div
-        className={
-          `w-5/6 mx-auto px-4 flex flex-row  items-center py-2 pointer cursor-pointer ` +
-          (chat && chat.id === selectedChatId ? "border rounded-md" : " ")
-        }
+        className={`w-5/6 mx-auto px-4 flex flex-row items-center py-2 cursor-pointer ${
+          chat && chat.id === selectedChatId ? "border rounded-md" : ""
+        }`}
         onClick={handleClick}
       >
-        <div>
-          <Image
-            src={receiver.photoURL!}
-            width={40}
-            height={40}
-            className="rounded-full"
-            alt={receiver.displayName!}
-          />
-        </div>
-
+        <Image
+          src={receiver.photoURL!}
+          width={40}
+          height={40}
+          className="rounded-full"
+          alt={receiver.displayName!}
+        />
         <div className="ml-4">
           <p>{receiver.displayName}</p>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default UserListItem;

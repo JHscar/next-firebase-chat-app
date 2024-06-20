@@ -17,14 +17,17 @@ export default function BottomBar({ user, chatId }: IBottomBarProps) {
     e.preventDefault();
     if (input.trim().length === 0) return;
 
-    await addDoc(collection(db, `chats/${chatId}/messages`), {
-      text: input,
-      sender: user.email,
-      photoURL: user.photoURL,
-      timestamp: serverTimestamp(),
-    });
-
-    setInput("");
+    try {
+      await addDoc(collection(db, `chats/${chatId}/messages`), {
+        text: input,
+        sender: user.email,
+        photoURL: user.photoURL,
+        timestamp: serverTimestamp(),
+      });
+      setInput("");
+    } catch (error) {
+      console.error("Error sending message: ", error);
+    }
   };
 
   return (
